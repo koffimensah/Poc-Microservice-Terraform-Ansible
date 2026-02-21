@@ -47,7 +47,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.PAT_TOKEN }}
       - id: meta
         uses: docker/metadata-action@v5
         with:
@@ -100,4 +100,4 @@ jobs:
         run: |
           ansible-playbook playbooks/deploy.yaml \
             -e "ghcr_username=${{ github.actor }}" \
-            -e "ghcr_token=${{ secrets.GITHUB_TOKEN }}"
+            -e "ghcr_token=${{ secrets.PAT_TOKEN }}"
