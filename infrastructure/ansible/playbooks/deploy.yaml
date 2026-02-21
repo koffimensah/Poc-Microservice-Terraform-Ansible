@@ -1,0 +1,73 @@
+---
+- name: Deploy Poc_infra services via Docker Compose
+  hosts: app_server
+  become: true
+  vars:
+    app_dir: /opt/poc-infra
+
+  tasks:
+    - name: Copy docker-compose.yaml to server
+      copy:
+        src: /home/koffi/Poc_infra/docker-compose.yaml
+        dest: "{{ app_dir }}/docker-compose.yaml"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+
+    - name: Copy .env file to server
+      copy:
+        src: /home/koffi/Poc_infra/.env.production
+        dest: "{{ app_dir }}/.env"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0600"
+
+    - name: Log in to GitHub Container Registry
+      community.docker.docker_login:
+        registry_url: ghcr.io
+        username: "{{ ghcr_username }}"
+        password: "{{ ghcr_token }}"
+
+    - name: Pull and restart services
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        files:
+          - docker-compose.yaml
+        pull: always
+        recreate: always
+        state: present
+
+    - name: Wait for CustomerService
+      uri:
+        url: "http://localhost:5001/health"
+        status_code: 200
+      retries: 10
+      delay: 5
+      register: r
+      until: r.status == 200
+
+    - name: Wait for OrderService
+      uri:
+        url: "http://localhost:5002/health"
+        status_code: 200
+      retries: 10
+      delay: 5
+      register: r
+      until: r.status == 200
+
+    - name: Wait for CatalogService
+      uri:
+        url: "http://localhost:5003/health"
+        status_code: 200
+      retries: 10
+      delay: 5
+      register: r
+      until: r.status == 200
+
+    - name: Deployment complete
+      debug:
+        msg:
+          - "CustomerService → http://{{ ansible_host }}:5001"
+          - "OrderService    → http://{{ ansible_host }}:5002"
+          - "CatalogService  → http://{{ ansible_host }}:5003"
+          - "RabbitMQ UI     → http://{{ ansible_host }}:15672"

@@ -1,0 +1,57 @@
+---
+- name: Setup server — install Docker and prepare environment
+  hosts: app_server
+  become: true
+  gather_facts: true
+
+  roles:
+    - docker
+
+  tasks:
+    - name: Ensure UFW is installed
+      apt:
+        name: ufw
+        state: present
+
+    - name: Allow SSH
+      ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Allow HTTP
+      ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+
+    - name: Allow HTTPS
+      ufw:
+        rule: allow
+        port: "443"
+        proto: tcp
+
+    - name: Allow .NET service ports
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - "5001"
+        - "5002"
+        - "5003"
+        - "15672"
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+        policy: deny
+
+    - name: Create docker network
+      community.docker.docker_network:
+        name: poc_network
+        state: present
+
+    - name: Done
+      debug:
+        msg: "Server ready. Docker installed. Run deploy.yml next."

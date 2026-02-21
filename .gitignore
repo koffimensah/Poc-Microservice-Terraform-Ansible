@@ -1,0 +1,22 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform.lock.hcl
+
+# .NET build artifacts
+**/bin/
+**/obj/
+
+# Secrets
+.env
+.env.production
+
+# VS
+**/.vscode/*
+**/.vs/*
+*.user
+
+# Docker
+*.dockerignore
